@@ -16,8 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.app.cade.ui.theme.AccentTeal
-import com.app.cade.ui.theme.PrimaryBlue
+import com.app.cade.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
@@ -35,30 +34,35 @@ fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .background(BackgroundDark)
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Icon with Gradient / Tint
         Icon(
             imageVector = Icons.Default.Security,
-            contentDescription = "Security",
-            modifier = Modifier.size(80.dp),
-            tint = AccentTeal
+            contentDescription = "Segurança",
+            modifier = Modifier.size(100.dp),
+            tint = PrimaryCyan
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
+        
         Text(
             text = "Precisamos de sua Permissão",
             fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
+            fontWeight = FontWeight.ExtraBold,
+            color = TextPrimary,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
+        
         Text(
-            text = "O CADÊ usa Localização Precisa, Bluetooth (BLE) e UWB para conectar você com seus contatos em locais movimentados. Sem eles, o app não funciona.",
+            text = "O CADÊ usa Localização Precisa e Sinais Bluetooth para conectar você de forma anônima a quem você procura e vice-versa.",
             fontSize = 16.sp,
-            color = Color.Gray,
-            textAlign = TextAlign.Center
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            lineHeight = 24.sp
         )
         
         Spacer(modifier = Modifier.height(48.dp))
@@ -73,24 +77,25 @@ fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-            shape = RoundedCornerShape(16.dp)
+                .height(56.dp)
+                .background(BrandGradientHorizontal, RoundedCornerShape(16.dp)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            contentPadding = PaddingValues()
         ) {
             Text(
-                text = if (permissionsState.allPermissionsGranted) "Continuar" else "Conceder Permissões",
+                text = if (permissionsState.allPermissionsGranted) "Continuar para App" else "Conceder Permissões",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 color = Color.White
             )
         }
         
         if (permissionsState.allPermissionsGranted) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                "Permissões concedidas com sucesso!",
-                color = AccentTeal,
-                fontWeight = FontWeight.Medium
+                "✔ Permissões ativas e prontas",
+                color = PrimaryCyan,
+                fontWeight = FontWeight.SemiBold
             )
         }
     }
