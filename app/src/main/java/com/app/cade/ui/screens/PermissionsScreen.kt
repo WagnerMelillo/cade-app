@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalPermissionsApi::class)
 package com.app.cade.ui.screens
 
 import android.Manifest
@@ -20,6 +19,7 @@ import com.app.cade.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
     val permissionsState = rememberMultiplePermissionsState(
@@ -80,7 +80,7 @@ fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
                 .height(56.dp)
                 .background(BrandGradientHorizontal, RoundedCornerShape(16.dp)),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-            contentPadding = PaddingValues()
+            contentPadding = PaddingValues(0.dp)
         ) {
             Text(
                 text = if (permissionsState.allPermissionsGranted) "Continuar para App" else "Conceder Permissões",

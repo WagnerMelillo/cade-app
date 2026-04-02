@@ -54,12 +54,13 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            val textFieldColors = TextFieldDefaults.outlinedTextFieldColors(
+            val textFieldColors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = PrimaryCyan,
                 unfocusedBorderColor = GlassBorder,
                 focusedLabelColor = PrimaryCyan,
                 unfocusedLabelColor = TextSecondary,
-                textColor = TextPrimary,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary,
                 cursorColor = PrimaryCyan
             )
 
@@ -116,7 +117,7 @@ fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
                     .height(56.dp)
                     .background(BrandGradientHorizontal, RoundedCornerShape(16.dp)),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues()
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Text("Entrar no App", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
