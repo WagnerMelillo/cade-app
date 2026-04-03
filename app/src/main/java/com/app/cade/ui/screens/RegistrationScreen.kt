@@ -2,7 +2,9 @@ package com.app.cade.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.*
@@ -14,120 +16,108 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.cade.data.DiscoveredContact
+import com.app.cade.ui.AppViewModel
 import com.app.cade.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistrationScreen(onRegistrationComplete: () -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var visualStatus by remember { mutableStateOf("") }
+fun RegistrationScreen(
+    viewModel: AppViewModel,
+    onRegistrationComplete: () -> Unit
+) {
+    val userProfile by viewModel.userProfile.collectAsState()
+    val discoveredDevices by viewModel.scannerManager.discoveredDevices.collectAsState()
 
-    Box(
+    var name by remember { mutableStateOf(userProfile?.name ?: "") }
+    var phone by remember { mutableStateOf(userProfile?.phone ?: "") }
+    var password by remember { mutableStateOf(userProfile?.securityCode ?: "") }
+    var visualStatus by remember { mutableStateOf(userProfile?.visualStatus ?: "") }
+
+    var contactName by remember { mutableStateOf("") }
+    var contactId by remember { mutableStateOf("") }
+
+    val scrollState = rememberScrollState()
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundDark)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .background(GlassWhite, RoundedCornerShape(24.dp))
-                .padding(32.dp)
+                .padding(24.dp)
         ) {
-            Text(
-                text = "Cadê?",
-                fontSize = 40.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = PrimaryCyan
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Crie seu Perfil",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-
-            val textFieldColors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PrimaryCyan,
-                unfocusedBorderColor = GlassBorder,
-                focusedLabelColor = PrimaryCyan,
-                unfocusedLabelColor = TextSecondary,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary,
-                cursorColor = PrimaryCyan
-            )
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nome completo") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
-            )
+            Text("Seu Perfil (Rastreador)", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = PrimaryCyan)
             Spacer(modifier = Modifier.height(16.dp))
 
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Telefone") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Telefone") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { if (it.length <= 4) password = it },
-                label = { Text("Senha secreta (4 dígitos)") },
+                value = password, onValueChange = { if(it.length <= 4) password = it },
+                label = { Text("Senha (4 dígitos)") },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(16.dp))
-
             OutlinedTextField(
-                value = visualStatus,
-                onValueChange = { if (it.length <= 15) visualStatus = it },
+                value = visualStatus, onValueChange = { if (it.length <= 15) visualStatus = it },
                 label = { Text("Status Visual (ex: Blusa Azul)") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors,
                 supportingText = { Text("${visualStatus.length}/15", color = TextSecondary) }
             )
-            Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onRegistrationComplete,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .background(BrandGradientHorizontal, RoundedCornerShape(16.dp)),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                contentPadding = PaddingValues(0.dp)
+                onClick = {
+                    viewModel.saveProfile(name, phone, password, visualStatus)
+                    onRegistrationComplete()
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
             ) {
-                Text("Entrar no App", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Salvar Perfil Principal")
             }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Contatos
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(GlassWhite, RoundedCornerShape(24.dp))
+                .padding(24.dp)
+        ) {
+            Text("Adicionar Contato P/ Rastrear", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryCyan)
+            Spacer(modifier = Modifier.height(16.dp))
             
-            Spacer(modifier = Modifier.height(24.dp))
+            OutlinedTextField(value = contactName, onValueChange = { contactName = it }, label = { Text("Nome do Contato") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = contactId, onValueChange = { contactId = it }, label = { Text("ID ou MAC Bluetooth") }, modifier = Modifier.fillMaxWidth())
             
-            TextButton(onClick = { /* TODO: Scanner QR Code */ }) {
-                Icon(Icons.Default.QrCode, contentDescription = "QR Code", tint = PrimaryCyan)
+            Button(
+                onClick = { 
+                    viewModel.saveContact(DiscoveredContact(id = contactId, name = contactName))
+                    contactName = ""
+                    contactId = ""
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            ) {
+                Text("Salvar Novo Contato")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Dispositivos detectados agora:", color = TextSecondary)
+            discoveredDevices.forEach { device ->
+                Text("${device.name} - ${device.id}", color = Color.White, fontSize = 12.sp)
+            }
+
+            TextButton(onClick = { /* TODO: Scanner QR Code real future */ }, modifier = Modifier.padding(top=16.dp)) {
+                Icon(Icons.Default.QrCode, contentDescription = "QR", tint = PrimaryCyan)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Adicionar via QR Code", color = PrimaryCyan, fontWeight = FontWeight.Medium)
+                Text("QR Code (Troca de ID Rápida)", color = PrimaryCyan)
             }
         }
     }

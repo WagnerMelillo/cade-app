@@ -50,4 +50,7 @@ dependencies {
     
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Location
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 }
