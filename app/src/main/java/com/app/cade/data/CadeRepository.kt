@@ -22,6 +22,14 @@ data class DiscoveredContact(
 class CadeRepository(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("cade_prefs", Context.MODE_PRIVATE)
 
+    fun isOnboardingComplete(): Boolean {
+        return prefs.getBoolean("ONBOARDING_COMPLETE", false)
+    }
+
+    fun setOnboardingComplete(complete: Boolean) {
+        prefs.edit().putBoolean("ONBOARDING_COMPLETE", complete).apply()
+    }
+
     fun saveUserProfile(profile: UserProfile) {
         prefs.edit()
             .putString("USER_NAME", profile.name)

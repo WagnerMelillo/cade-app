@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.provider.ContactsContract
+import android.annotation.SuppressLint
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -30,6 +32,35 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     // Controla se a pessoa está procurando
     private val _isScanning = MutableStateFlow(false)
     val isScanning = _isScanning.asStateFlow()
+
+    private val _isOnboardingComplete = MutableStateFlow(repository.isOnboardingComplete())
+    val isOnboardingComplete = _isOnboardingComplete.asStateFlow()
+
+    fun completeOnboarding() {
+        repository.setOnboardingComplete(true)
+        _isOnboardingComplete.value = true
+    }
+
+    @SuppressLint("Range")
+    fun fetchPhoneContacts(): List<DiscoveredContact> {
+        val list = mutableListOf<DiscoveredContact>()
+        val resolver = getApplication<Application>().contentResolver
+        val cursor = resolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            null, null, null,
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+        )
+        cursor?.use {
+            while (it.moveToNext()) {
+                val name = it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME))
+                val phone = it.getString(it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
+                // Retornando DiscoveredContact com id sendo o phone como provisório
+                list.add(DiscoveredContact(id = phone.replace(Regex("[^0-9+]"), ""), name = name))
+            }
+        }
+        // Deduplicate
+        return list.distinctBy { it.id }
+    }
 
     fun saveProfile(name: String, phone: String, code: String, visual: String) {
         val profile = UserProfile(name, phone, code, visual)

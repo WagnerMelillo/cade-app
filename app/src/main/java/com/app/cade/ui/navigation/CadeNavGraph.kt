@@ -8,15 +8,29 @@ import com.app.cade.ui.AppViewModel
 import com.app.cade.ui.screens.ConnectionPanelScreen
 import com.app.cade.ui.screens.DashboardScreen
 import com.app.cade.ui.screens.PermissionsScreen
+import com.app.cade.ui.screens.PermissionsScreen
 import com.app.cade.ui.screens.RegistrationScreen
 import com.app.cade.ui.screens.SettingsScreen
+import com.app.cade.ui.screens.onboarding.OnboardingScreen
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 fun CadeNavGraph(navController: NavHostController, viewModel: AppViewModel) {
+    val isOnboardingComplete by viewModel.isOnboardingComplete.collectAsState()
+    
     NavHost(
         navController = navController,
-        startDestination = "permissions"
+        startDestination = if (isOnboardingComplete) "permissions" else "onboarding"
     ) {
+        composable("onboarding") {
+            OnboardingScreen(
+                viewModel = viewModel,
+                onFinish = {
+                    navController.navigate("permissions") { popUpTo("onboarding") { inclusive = true } }
+                }
+            )
+        }
         composable("permissions") {
             PermissionsScreen(onPermissionsGranted = {
                 navController.navigate("registration") { popUpTo("permissions") { inclusive = true } }
