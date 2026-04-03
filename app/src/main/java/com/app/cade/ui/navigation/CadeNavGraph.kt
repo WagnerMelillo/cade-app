@@ -9,6 +9,7 @@ import com.app.cade.ui.screens.ConnectionPanelScreen
 import com.app.cade.ui.screens.DashboardScreen
 import com.app.cade.ui.screens.PermissionsScreen
 import com.app.cade.ui.screens.RegistrationScreen
+import com.app.cade.ui.screens.SettingsScreen
 
 @Composable
 fun CadeNavGraph(navController: NavHostController, viewModel: AppViewModel) {
@@ -32,11 +33,18 @@ fun CadeNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         composable("dashboard") {
             DashboardScreen(
                 viewModel = viewModel,
-                onNavigateToConnections = { navController.navigate("connections") }
+                onNavigateToConnections = { navController.navigate("connections") },
+                onNavigateToSettings = { navController.navigate("settings") }
             )
         }
         composable("connections") {
             ConnectionPanelScreen(
+                viewModel = viewModel,
+                onBack = { navController.navigateUp() }
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
                 viewModel = viewModel,
                 onBack = { navController.navigateUp() }
             )
