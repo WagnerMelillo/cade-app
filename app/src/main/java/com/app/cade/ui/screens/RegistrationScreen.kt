@@ -1,6 +1,7 @@
 package com.app.cade.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,7 +52,7 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             OutlinedTextField(value = contactName, onValueChange = { contactName = it }, label = { Text("Nome do Contato") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = contactId, onValueChange = { contactId = it }, label = { Text("MAC BLE ou UUID Manual") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = contactId, onValueChange = { contactId = it }, label = { Text("ID de Radar do contato (8 caracteres)") }, modifier = Modifier.fillMaxWidth())
             
             Button(
                 onClick = { 
@@ -65,9 +66,20 @@ fun RegistrationScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Dispositivos detectados agora (Perto de Você):", color = TextSecondary, fontSize = 12.sp)
+            Text("Dispositivos CADÊ detectados agora (toque para adicionar):", color = TextSecondary, fontSize = 12.sp)
             discoveredDevices.forEach { device ->
-                Text("${device.name} - ${device.id}", color = Color.White, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                Text(
+                    "• ID ${device.id}  (sinal ${device.lastRssi} dBm)",
+                    color = PrimaryCyan,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 6.dp)
+                        .clickable {
+                            contactId = device.id
+                            if (contactName.isBlank()) contactName = "Contato ${device.id.take(4)}"
+                        }
+                )
             }
 
             Button(

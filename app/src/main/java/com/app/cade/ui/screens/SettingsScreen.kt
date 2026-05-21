@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,13 +30,17 @@ fun SettingsScreen(
     onBack: () -> Unit
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
+    val uwbEnabled by viewModel.uwbEnabled.collectAsState()
+    val radarId = viewModel.radarId
+    val uwbSupported = viewModel.uwbSupported
 
     var name by remember { mutableStateOf(userProfile?.name ?: "") }
     var phone by remember { mutableStateOf(userProfile?.phone ?: "") }
     var password by remember { mutableStateOf(userProfile?.securityCode ?: "") }
 
-    val qrCodeBitmap = remember(name, phone) {
-        QRCodeGenerator.generateQRCode("CADE:$name:$phone")
+    // O QR Code agora carrega também o radarId, que é o que o radar BLE casa.
+    val qrCodeBitmap = remember(name, phone, radarId) {
+        QRCodeGenerator.generateQRCode("CADE:$name:$phone:$radarId")
     }
 
     val scrollState = rememberScrollState()
@@ -64,8 +69,8 @@ fun SettingsScreen(
                 .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            
-            // Perfil Edit
+
+            // ---------- Perfil ----------
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -73,6 +78,8 @@ fun SettingsScreen(
                     .padding(24.dp)
             ) {
                 Text("Meus Dados Básicos", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryCyan)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Meu ID de radar: $radarId", fontSize = 12.sp, color = TextSecondary)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -84,7 +91,7 @@ fun SettingsScreen(
                     label = { Text("Seu Telefone") }, modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
-                    value = password, onValueChange = { if(it.length <= 4) password = it },
+                    value = password, onValueChange = { if (it.length <= 4) password = it },
                     label = { Text("Senha Secreta (4 Dígitos)") }, modifier = Modifier.fillMaxWidth()
                 )
 
@@ -101,29 +108,31 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // QR Code Panel
+            // ---------- Conexão UWB (ver UWB.docx) ----------
+            UwbSection(
+                supported = uwbSupported,
+                enabled = uwbEnabled,
+                onToggle = { viewModel.setUwbEnabled(it) }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ---------- QR Code ----------
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(PrimaryBlue.copy(alpha=0.1f), RoundedCornerShape(24.dp))
+                    .background(PrimaryBlue.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Meu QR Code de Contato", 
-                    fontSize = 18.sp, 
-                    fontWeight = FontWeight.Bold, 
-                    color = Color.White
-                )
+                Text("Meu QR Code de Contato", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Mostre este QR code para a pessoa que vai te rastrear parear rapidamente.", 
-                    fontSize = 14.sp, 
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center
+                    text = "Mostre este QR code para a pessoa que vai te rastrear parear rapidamente.",
+                    fontSize = 14.sp, color = TextSecondary, textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 qrCodeBitmap?.let { bmp ->
                     Image(
                         bitmap = bmp,
@@ -132,11 +141,57 @@ fun SettingsScreen(
                         contentScale = ContentScale.Fit
                     )
                 } ?: run {
-                    Box(modifier=Modifier.size(200.dp).background(Color.Gray)) {
-                        Text("Preencha os dados acima", modifier=Modifier.align(Alignment.Center))
+                    Box(modifier = Modifier.size(200.dp).background(Color.Gray)) {
+                        Text("Preencha os dados acima", modifier = Modifier.align(Alignment.Center))
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Seção de UWB. Aparece como toggle ativável quando o aparelho é compatível
+ * (detecção REAL via UwbCapabilityHelper) e como aviso desabilitado quando não.
+ */
+@Composable
+private fun UwbSection(
+    supported: Boolean,
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(GlassWhite, RoundedCornerShape(24.dp))
+            .padding(24.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Bolt, contentDescription = null, tint = PrimaryCyan)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Conexão UWB", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryCyan)
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (supported) {
+            Text(
+                "Seu dispositivo é compatível com UWB. Ative esta opção caso deseje utilizar esse recurso para localização de alta precisão.",
+                fontSize = 14.sp, color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Habilitar conexão UWB", fontSize = 16.sp, color = TextPrimary)
+                Switch(checked = enabled, onCheckedChange = onToggle)
+            }
+        } else {
+            Text(
+                "Este dispositivo não oferece suporte à tecnologia UWB.",
+                fontSize = 14.sp, color = TextSecondary
+            )
         }
     }
 }

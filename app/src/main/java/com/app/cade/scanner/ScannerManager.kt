@@ -227,9 +227,15 @@ class ScannerManager(private val context: Context) {
         val current = _discoveredDevices.value.toMutableList()
         val index = current.indexOfFirst { it.id == device.id }
         if (index != -1) current[index] = device else current.add(device)
+        // Remove dispositivos que sumiram (não vistos há mais de STALE_MS)
         _discoveredDevices.value = current.filter { now - it.lastSeen < STALE_MS }
     }
 
+    /**
+     * Estimativa de distância (metros) a partir do RSSI. É APROXIMADA por
+     * natureza (varia com obstáculos, corpo, orientação). Serve para o modo
+     * "quente/frio", não para precisão métrica.
+     */
     private fun calculateDistance(rssi: Int, txPower: Int): Double {
         if (rssi == 0) return -1.0
         val ratio = rssi * 1.0 / txPower
@@ -239,6 +245,8 @@ class ScannerManager(private val context: Context) {
             (0.89976) * Math.pow(ratio, 7.7095) + 0.111
         }
     }
+
+    // ---------------- Permissões ----------------
 
     private fun hasLocationPermission(): Boolean =
         ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==

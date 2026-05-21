@@ -8,9 +8,9 @@ import com.google.zxing.qrcode.QRCodeWriter
 
 object QRCodeGenerator {
     fun generateQRCode(text: String, size: Int = 512): ImageBitmap? {
-        if (text.isBlank()) return null
+        val safeText = if (text.isBlank() || text == "CADE::") "CADE:PreenchaSeusDados" else text
         return try {
-            val bitMatrix = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size)
+            val bitMatrix = QRCodeWriter().encode(safeText, BarcodeFormat.QR_CODE, size, size)
             val width = bitMatrix.width
             val height = bitMatrix.height
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
