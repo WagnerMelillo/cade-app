@@ -114,6 +114,11 @@ class CadeRepository(context: Context) {
         prefs.edit().putString("SAVED_CONTACTS", jsonArray.toString()).apply()
     }
 
+    /** Apaga toda a lista de rastreados (útil para limpar de uma vez). */
+    fun clearAllContacts() {
+        prefs.edit().putString("SAVED_CONTACTS", "[]").apply()
+    }
+
     fun getSavedContacts(): List<DiscoveredContact> {
         val jsonStr = prefs.getString("SAVED_CONTACTS", "[]") ?: "[]"
         val list = mutableListOf<DiscoveredContact>()
@@ -131,6 +136,8 @@ class CadeRepository(context: Context) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        return list
+        // Remove duplicados (mesmo id) e ordena por nome, para a lista nunca
+        // aparecer repetida ou bagunçada.
+        return list.distinctBy { it.id }.sortedBy { it.name.lowercase() }
     }
 }

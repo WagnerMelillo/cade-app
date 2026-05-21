@@ -184,6 +184,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun clearAllContacts() {
+        repository.clearAllContacts()
+        _savedContacts.value = repository.getSavedContacts()
+        _selectedTarget.value = null
+    }
+
     fun toggleAdvertising(enabled: Boolean) {
         _isAdvertising.value = enabled
         if (enabled) {

@@ -10,6 +10,7 @@ import com.app.cade.ui.AppViewModel
 import com.app.cade.ui.screens.ConnectionPanelScreen
 import com.app.cade.ui.screens.ContactsScreen
 import com.app.cade.ui.screens.DashboardScreen
+import com.app.cade.ui.screens.InviteFromContactsScreen
 import com.app.cade.ui.screens.PermissionsScreen
 import com.app.cade.ui.screens.RegistrationScreen
 import com.app.cade.ui.screens.SettingsScreen
@@ -59,7 +60,14 @@ fun CadeNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             SettingsScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
         }
         composable("contacts") {
-            ContactsScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
+            ContactsScreen(
+                viewModel = viewModel,
+                onBack = { navController.navigateUp() },
+                onNavigateToInvite = { navController.navigate("invite") }
+            )
+        }
+        composable("invite") {
+            InviteFromContactsScreen(viewModel = viewModel, onBack = { navController.navigateUp() })
         }
     }
 }
