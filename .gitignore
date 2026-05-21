@@ -1,0 +1,19 @@
+# Build
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild
+.cxx/
+*.apk
+*.aab
+
+# Arquivos pesados de toolchain que NÃO devem ir para o repositório
+# (o GitHub Actions baixa Gradle/JDK/SDK sozinho)
+gradle.zip
+jdk.zip
+gradle_bin/
+jdk_bin/
