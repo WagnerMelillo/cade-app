@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.UUID
 
 data class UserProfile(
     val name: String,
@@ -12,22 +13,58 @@ data class UserProfile(
     val visualStatus: String
 )
 
+/**
+ * Representa um contato descoberto pelo radar OU salvo na lista.
+ * - id: o "radarId" estável do dispositivo (8 hex). É o que casa o anúncio BLE
+ *   com o contato salvo.
+ * - lat/lon: última posição conhecida recebida pelo ar (pode ser null quando
+ *   o aparelho do alvo não tem fix de localização).
+ */
 data class DiscoveredContact(
-    val id: String, // MAC Address ou UUID
+    val id: String,
     val name: String,
     val lastRssi: Int = 0,
-    val distance: Double = 0.0
+    val distance: Double = 0.0,
+    val lat: Double? = null,
+    val lon: Double? = null,
+    val lastSeen: Long = 0L
 )
 
 class CadeRepository(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("cade_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("cade_prefs", Context.MODE_PRIVATE)
 
-    fun isOnboardingComplete(): Boolean {
-        return prefs.getBoolean("ONBOARDING_COMPLETE", false)
-    }
+    fun isOnboardingComplete(): Boolean = prefs.getBoolean("ONBOARDING_COMPLETE", false)
 
     fun setOnboardingComplete(complete: Boolean) {
         prefs.edit().putBoolean("ONBOARDING_COMPLETE", complete).apply()
+    }
+
+    /**
+     * ID estável e curto deste aparelho no radar (8 caracteres hex).
+     * Gerado uma única vez e reutilizado. Vai no QR Code e no anúncio BLE.
+     */
+    fun getOrCreateRadarId(): String {
+        var id = prefs.getString("RADAR_ID", null)
+        if (id == null) {
+            id = UUID.randomUUID().toString().replace("-", "").take(8).uppercase()
+            prefs.edit().putString("RADAR_ID", id).apply()
+        }
+        return id
+    }
+
+    // ----- Preferência de UWB (ver UWB.docx) -----
+    fun isUwbEnabled(): Boolean = prefs.getBoolean("UWB_ENABLED", false)
+
+    fun setUwbEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("UWB_ENABLED", enabled).apply()
+    }
+
+    // ----- Preferência de som de aproximação -----
+    fun isSoundEnabled(): Boolean = prefs.getBoolean("SOUND_ENABLED", false)
+
+    fun setSoundEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("SOUND_ENABLED", enabled).apply()
     }
 
     fun saveUserProfile(profile: UserProfile) {
@@ -51,10 +88,22 @@ class CadeRepository(context: Context) {
 
     fun saveContact(contact: DiscoveredContact) {
         val contacts = getSavedContacts().toMutableList()
-        // Remover se já existir para atualizar
         contacts.removeAll { it.id == contact.id }
         contacts.add(contact)
-        
+
+        val jsonArray = JSONArray()
+        contacts.forEach {
+            val obj = JSONObject()
+            obj.put("id", it.id)
+            obj.put("name", it.name)
+            jsonArray.put(obj)
+        }
+        prefs.edit().putString("SAVED_CONTACTS", jsonArray.toString()).apply()
+    }
+
+    fun removeContact(id: String) {
+        val contacts = getSavedContacts().toMutableList()
+        contacts.removeAll { it.id == id }
         val jsonArray = JSONArray()
         contacts.forEach {
             val obj = JSONObject()
